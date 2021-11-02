@@ -16,3 +16,10 @@ def h(x):
         if (x % i) == 0:
             return False
     return True
+
+
+def hb(x):
+    for i in range(x-1, 1, -1):
+        if (x % i) == 0:
+            return False
+    return True

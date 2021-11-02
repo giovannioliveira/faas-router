@@ -40,6 +40,14 @@ def h():
         return str(local.h(x))
 
 
+@app.route('/hb')
+def hb():
+    x = int(request.args.get('x'))
+    if cloud_has_warm_instance('hb'):
+        print("make a call to cloud for hb")
+    else:
+        return str(local.hb(x))
+
 if __name__ == '__main__':
     threading.Thread(target=edge.simulate_arrival).start()
     app.run()
