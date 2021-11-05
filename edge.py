@@ -27,9 +27,7 @@ def simulate_arrival():
         def caller(function_name):
             atomic_modify(function_name, 1)
             t0 = time.time_ns()
-            urllib.request.urlopen("http://localhost:5000/"+function_name +
-                                   ("?x=24691245" if function_name == "h" else "") +
-                                   ("?x=24699" if function_name == "hb" else ""))
+            urllib.request.urlopen("http://localhost:5000/"+function_name)
             tf = time.time_ns()
             execution_history[function_name].append(tf-t0)
             atomic_modify(function_name, -1)

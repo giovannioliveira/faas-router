@@ -1,13 +1,48 @@
-from flask import Flask, request
+import time
+from flask import Flask, request, Response
 import local
+import urllib.request
 import edge
 import threading
 
 app = Flask(__name__)
 
+FNAME = 'faas-router-f'
+GNAME = 'faas-router-g'
+HBNAME = 'faas-router-hb'
+HNAME = 'faas-router-h'
+
+remoteCount = {
+    FNAME: 0,
+    GNAME: 0,
+    HNAME: 0,
+    HBNAME: 0
+}
+
+def reset_remote_count():
+    for key in remoteCount.keys():
+        remoteCount[key] = 0
+
+
+def update_remote_count():
+    errcnt = 0
+    while True:
+        try:
+            global remoteCount
+            remoteCount = eval(urllib.request.urlopen("http://192.168.56.105:8080/info").read().decode('utf-8'))
+            errcnt = 0
+        except:
+            errcnt += 1
+            if errcnt == 3:
+                reset_remote_count()
+            print('Error in connection with remote cloud')
+        finally:
+            print('remoteCount:', remoteCount, '\n')
+            time.sleep(1)
+
 
 def cloud_has_warm_instance(function_name):
-    return False
+    return remoteCount[function_name] > 0
 
 
 @app.route('/')
@@ -17,37 +52,79 @@ def hello_world():  # put application's code here
 
 @app.route('/f')
 def f():
-    if cloud_has_warm_instance('f'):
-        print("make a call to cloud for f")
-    else:
-        return local.f()
+    run_in_cloud = cloud_has_warm_instance(FNAME)
+    error = False
+    try:
+        if run_in_cloud:
+            urllib.request.urlopen("http://192.168.56.105:8080/f")
+            print("done f cloud")
+        else:
+            local.f()
+            print("done f local")
+    except:
+        print('Error running f', run_in_cloud)
+        error = True
+    finally:
+        return Response('', status=500 if error else 200)
 
 
 @app.route('/g')
 def g():
-    if cloud_has_warm_instance('g'):
-        print("make a call to cloud for g")
-    else:
-        return local.g()
+    run_in_cloud = cloud_has_warm_instance(GNAME)
+    error = False
+    try:
+        if run_in_cloud:
+            urllib.request.urlopen("http://192.168.56.105:8080/g")
+            print("done g cloud")
+        else:
+            local.g()
+            print("done g local")
+    except:
+        print('Error running g', run_in_cloud)
+        error = True
+    finally:
+        return Response('', status=500 if error else 200)
+
 
 
 @app.route('/h')
 def h():
-    x = int(request.args.get('x'))
-    if cloud_has_warm_instance('h'):
-        print("make a call to cloud for h")
-    else:
-        return str(local.h(x))
+    run_in_cloud = cloud_has_warm_instance(HNAME)
+    error = False
+    try:
+        if run_in_cloud:
+            urllib.request.urlopen("http://192.168.56.105:8080/h")
+            print("done h cloud")
+        else:
+            local.h()
+            print("done h local")
+    except:
+        print('Error running h', run_in_cloud)
+        error = True
+    finally:
+        return Response('', status=500 if error else 200)
 
 
 @app.route('/hb')
 def hb():
-    x = int(request.args.get('x'))
-    if cloud_has_warm_instance('hb'):
-        print("make a call to cloud for hb")
-    else:
-        return str(local.hb(x))
+    run_in_cloud = cloud_has_warm_instance(HBNAME)
+    error = False
+    try:
+        if run_in_cloud:
+            urllib.request.urlopen("http://192.168.56.105:8080/hb")
+            print("done hb cloud")
+        else:
+            local.hb()
+            print("done hb local")
+    except:
+        print('Error running hb', run_in_cloud)
+        error = True
+    finally:
+        return Response('', status=500 if error else 200)
+
 
 if __name__ == '__main__':
-    threading.Thread(target=edge.simulate_arrival).start()
+    #threading.Thread(target=edge.simulate_arrival).start()
+    threading.Thread(target=update_remote_count).start()
+    print('kjashrhkj')
     app.run()

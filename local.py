@@ -2,24 +2,29 @@ import time
 
 
 def f():
+    t0 = time.time_ns()
     time.sleep(.01)
-    return "slept 10 ms"
+    return str(time.time_ns() - t0)
 
 
 def g():
+    t0 = time.time_ns()
     time.sleep(10)
-    return "slept 10 s"
+    return str(time.time_ns() - t0)
 
 
-def h(x):
+def h():
+    t0 = time.time_ns()
+    x = 24691245
     for i in range(x-1, 1, -1):
         if (x % i) == 0:
-            return False
-    return True
+            break
+    return str(time.time_ns() - t0)
 
-
-def hb(x):
+def hb():
+    t0 = time.time_ns()
+    x = 24691245
     for i in range(x-1, 1, -1):
         if (x % i) == 0:
-            return False
-    return True
+            break
+    return str(time.time_ns() - t0)
