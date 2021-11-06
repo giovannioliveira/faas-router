@@ -7,10 +7,10 @@ import urllib.request
 def simulate_arrival():
     time.sleep(1)
     print("starting simulation arrivals")
-    next_arrive = {'f': (lambda : random.expovariate(1)),
+    next_arrive = {'f': (lambda : random.expovariate(10)),
                    'g': (lambda : random.expovariate(1)),
                    'h': (lambda : random.expovariate(1)),
-                   'hb': (lambda : random.expovariate(1))}
+                   'hb': (lambda : random.expovariate(10))}
     execution_history = {'f': [], 'g': [], 'h': [], 'hb': []}
     current_executions = {'f': [threading.Lock(), 0],
                           'g': [threading.Lock(), 0],
@@ -23,7 +23,6 @@ def simulate_arrival():
         current_executions[function_name][0].release()
 
     def random_caller(function_name):
-        print("f", function_name)
         def caller(function_name):
             atomic_modify(function_name, 1)
             t0 = time.time_ns()

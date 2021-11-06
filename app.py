@@ -1,5 +1,5 @@
 import time
-from flask import Flask, request, Response
+from flask import Flask, Response
 import local
 import urllib.request
 import edge
@@ -12,6 +12,8 @@ GNAME = 'faas-router-g'
 HBNAME = 'faas-router-hb'
 HNAME = 'faas-router-h'
 
+rcLock = threading.Lock()
+
 remoteCount = {
     FNAME: 0,
     GNAME: 0,
@@ -19,17 +21,45 @@ remoteCount = {
     HBNAME: 0
 }
 
+
+def set_remote_count(newCountStr, fromAsync=False):
+    rcLock.acquire()
+    global remoteCount
+    try:
+        remoteCount = eval(newCountStr)
+    except:
+        print('error setting remote count')
+    rcLock.release()
+    print(('async ' if fromAsync else '') + 'set remote count: ', remoteCount)
+
+
+def async_set_remote_count(newCountStr):
+    threading.Thread(target=set_remote_count, args=(newCountStr,)).start()
+
+
 def reset_remote_count():
-    for key in remoteCount.keys():
-        remoteCount[key] = 0
+    set_remote_count(str({
+        FNAME: 0,
+        GNAME: 0,
+        HNAME: 0,
+        HBNAME: 0
+    }))
+
+
+def get_request(sufix):
+    return urllib.request.urlopen("http://192.168.56.105:8080"+sufix).read().decode('utf-8')
+
+def async_update_remote_count(function_name):
+    threading.Thread(
+        target=(lambda: set_remote_count(get_request("/"+function_name+"?wakeup=true"), True))
+    ).start()
 
 
 def update_remote_count():
     errcnt = 0
     while True:
         try:
-            global remoteCount
-            remoteCount = eval(urllib.request.urlopen("http://192.168.56.105:8080/info").read().decode('utf-8'))
+            set_remote_count(get_request("/info"))
             errcnt = 0
         except:
             errcnt += 1
@@ -37,7 +67,6 @@ def update_remote_count():
                 reset_remote_count()
             print('Error in connection with remote cloud')
         finally:
-            print('remoteCount:', remoteCount, '\n')
             time.sleep(1)
 
 
@@ -56,14 +85,14 @@ def f():
     error = False
     try:
         if run_in_cloud:
-            urllib.request.urlopen("http://192.168.56.105:8080/f")
+            print('running f cloud')
+            async_set_remote_count(get_request("/f"))
             print("done f cloud")
         else:
-            threading.Thread(
-                target=(lambda:
-                        urllib.request.urlopen("http://192.168.56.105:8080/f?wakeup=true"))).start()
+            async_update_remote_count('f')
+            print('running f local')
             local.f()
-            print("done f local")
+            print('done f local')
     except:
         print('Error running f', run_in_cloud)
         error = True
@@ -77,12 +106,12 @@ def g():
     error = False
     try:
         if run_in_cloud:
-            urllib.request.urlopen("http://192.168.56.105:8080/g")
+            print('running g cloud')
+            async_set_remote_count(get_request("/g"))
             print("done g cloud")
         else:
-            threading.Thread(
-                target=(lambda :
-                        urllib.request.urlopen("http://192.168.56.105:8080/g?wakeup=true"))).start()
+            async_update_remote_count('g')
+            print('running g local')
             local.g()
             print("done g local")
     except:
@@ -99,12 +128,12 @@ def h():
     error = False
     try:
         if run_in_cloud:
-            urllib.request.urlopen("http://192.168.56.105:8080/h")
+            print('running h cloud')
+            async_set_remote_count(get_request("/h"))
             print("done h cloud")
         else:
-            threading.Thread(
-                target=(lambda :
-                        urllib.request.urlopen("http://192.168.56.105:8080/h?wakeup=true"))).start()
+            async_update_remote_count('h')
+            print('running h local')
             local.h()
             print("done h local")
     except:
@@ -120,12 +149,12 @@ def hb():
     error = False
     try:
         if run_in_cloud:
-            urllib.request.urlopen("http://192.168.56.105:8080/hb")
+            print('running hb cloud')
+            async_set_remote_count(get_request("/hb"))
             print("done hb cloud")
         else:
-            threading.Thread(
-                target=(lambda :
-                        urllib.request.urlopen("http://192.168.56.105:8080/hb?wakeup=true"))).start()
+            async_update_remote_count('hb')
+            print('running hb cloud')
             local.hb()
             print("done hb local")
     except:
@@ -138,5 +167,4 @@ def hb():
 if __name__ == '__main__':
     #threading.Thread(target=edge.simulate_arrival).start()
     threading.Thread(target=update_remote_count).start()
-    print('kjashrhkj')
     app.run()
