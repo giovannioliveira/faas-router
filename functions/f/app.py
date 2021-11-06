@@ -1,12 +1,14 @@
 import os
 import time
-from flask import Flask
+from flask import Flask, request
 
 app = Flask(__name__)
 
 
 @app.route('/')
 def f():
+   if request.args.get('wakeup'):
+      return 'ready'
    t0 = time.time_ns()
    time.sleep(.01)
    return str(time.time_ns() - t0)

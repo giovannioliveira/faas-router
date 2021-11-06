@@ -1,6 +1,6 @@
 import os
 import subprocess
-from flask import Flask, Response
+from flask import Flask, Response, request
 import threading
 
 lockF = threading.Lock()
@@ -22,6 +22,11 @@ app = Flask(__name__)
 @app.route('/f')
 def f():
 
+   if request.args.get('wakeup'):
+      threading.Thread(
+         target=(lambda: os.system('curl faas-router-f.default.127.0.0.1.nip.io?wakeup=true'))).start()
+      return 'preparing'
+
    global fcnt
    lockF.acquire()
    fcnt += 1
@@ -41,6 +46,13 @@ def f():
 
 @app.route('/g')
 def g():
+
+   if request.args.get('wakeup'):
+      threading.Thread(
+         target=(lambda: os.system('curl faas-router-g.default.127.0.0.1.nip.io?wakeup=true'))).start()
+      return 'preparing'
+
+
    global gcnt
    lockG.acquire()
    gcnt += 1
@@ -60,6 +72,12 @@ def g():
 
 @app.route('/h')
 def h():
+
+   if request.args.get('wakeup'):
+      threading.Thread(
+         target=(lambda: os.system('curl faas-router-h.default.127.0.0.1.nip.io?wakeup=true'))).start()
+      return 'preparing'
+
    global hcnt
    lockH.acquire()
    hcnt += 1
@@ -79,6 +97,12 @@ def h():
 
 @app.route('/hb')
 def hb():
+
+   if request.args.get('wakeup'):
+      threading.Thread(
+         target=(lambda: os.system('curl faas-router-hb.default.127.0.0.1.nip.io?wakeup=true'))).start()
+      return 'preparing'
+
    global hbcnt
    lockHb.acquire()
    hbcnt += 1
@@ -112,7 +136,7 @@ def info():
    for r in running:
       if FNAME in r[1]:
          available[FNAME] = int(r[0]) - fcnt
-      elif FNAME in r[1]:
+      elif GNAME in r[1]:
          available[GNAME] = int(r[0]) - gcnt
       elif HBNAME in r[1]:
          available[HBNAME] = int(r[0]) - hbcnt

@@ -59,6 +59,9 @@ def f():
             urllib.request.urlopen("http://192.168.56.105:8080/f")
             print("done f cloud")
         else:
+            threading.Thread(
+                target=(lambda:
+                        urllib.request.urlopen("http://192.168.56.105:8080/f?wakeup=true"))).start()
             local.f()
             print("done f local")
     except:
@@ -77,6 +80,9 @@ def g():
             urllib.request.urlopen("http://192.168.56.105:8080/g")
             print("done g cloud")
         else:
+            threading.Thread(
+                target=(lambda :
+                        urllib.request.urlopen("http://192.168.56.105:8080/g?wakeup=true"))).start()
             local.g()
             print("done g local")
     except:
@@ -96,6 +102,9 @@ def h():
             urllib.request.urlopen("http://192.168.56.105:8080/h")
             print("done h cloud")
         else:
+            threading.Thread(
+                target=(lambda :
+                        urllib.request.urlopen("http://192.168.56.105:8080/h?wakeup=true"))).start()
             local.h()
             print("done h local")
     except:
@@ -114,6 +123,9 @@ def hb():
             urllib.request.urlopen("http://192.168.56.105:8080/hb")
             print("done hb cloud")
         else:
+            threading.Thread(
+                target=(lambda :
+                        urllib.request.urlopen("http://192.168.56.105:8080/hb?wakeup=true"))).start()
             local.hb()
             print("done hb local")
     except:

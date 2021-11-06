@@ -1,12 +1,14 @@
 import os
 import time
-from flask import Flask
+from flask import Flask, request
 
 app = Flask(__name__)
 
 
 @app.route('/')
 def f():
+   if request.args.get('wakeup'):
+      return 'ready'
    t0 = time.time_ns()
    x = 24699
    for i in range(x - 1, 1, -1):
