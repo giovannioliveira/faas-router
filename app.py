@@ -36,6 +36,14 @@ def set_remote_count(newCountStr, fromAsync=False):
 def async_set_remote_count(newCountStr):
     threading.Thread(target=set_remote_count, args=(newCountStr,)).start()
 
+def atomic_increment_remote_count(function_name,inc):
+    rcLock.acquire()
+    remoteCount[function_name] += inc
+    rcLock.release()
+    print("local remote count update: ", str(remoteCount))
+
+def async_increment_remote_count(function_name, inc):
+    threading.Thread(target=atomic_increment_remote_count, args=(function_name, inc)).start()
 
 def reset_remote_count():
     set_remote_count(str({
@@ -61,13 +69,13 @@ def update_remote_count():
         try:
             set_remote_count(get_request("/info"))
             errcnt = 0
-        except:
+        except Exception as e:
             errcnt += 1
             if errcnt == 3:
                 reset_remote_count()
-            print('Error in connection with remote cloud')
+            print('Error in connection with remote cloud', e)
         finally:
-            time.sleep(1)
+            time.sleep(.2)
 
 
 def cloud_has_warm_instance(function_name):
@@ -85,16 +93,17 @@ def f():
     error = False
     try:
         if run_in_cloud:
-            print('running f cloud')
+            print('running f cloud', str(remoteCount))
+            async_increment_remote_count(FNAME, -1)
             async_set_remote_count(get_request("/f"))
             print("done f cloud")
         else:
             async_update_remote_count('f')
-            print('running f local')
+            print('running f local', str(remoteCount))
             local.f()
             print('done f local')
-    except:
-        print('Error running f', run_in_cloud)
+    except Exception as e:
+        print('Error running f:', e)
         error = True
     finally:
         return Response('', status=500 if error else 200)
@@ -106,16 +115,17 @@ def g():
     error = False
     try:
         if run_in_cloud:
-            print('running g cloud')
+            print('running g cloud', str(remoteCount))
+            async_increment_remote_count(GNAME, -1)
             async_set_remote_count(get_request("/g"))
             print("done g cloud")
         else:
             async_update_remote_count('g')
-            print('running g local')
+            print('running g local', str(remoteCount))
             local.g()
             print("done g local")
-    except:
-        print('Error running g', run_in_cloud)
+    except Exception as e:
+        print('Error running g', e)
         error = True
     finally:
         return Response('', status=500 if error else 200)
@@ -128,16 +138,17 @@ def h():
     error = False
     try:
         if run_in_cloud:
-            print('running h cloud')
+            print('running h cloud', str(remoteCount))
+            async_increment_remote_count(HNAME, -1)
             async_set_remote_count(get_request("/h"))
             print("done h cloud")
         else:
             async_update_remote_count('h')
-            print('running h local')
+            print('running h local', str(remoteCount))
             local.h()
             print("done h local")
-    except:
-        print('Error running h', run_in_cloud)
+    except Exception as e:
+        print('Error running h:', e)
         error = True
     finally:
         return Response('', status=500 if error else 200)
@@ -149,22 +160,22 @@ def hb():
     error = False
     try:
         if run_in_cloud:
-            print('running hb cloud')
+            print('running hb cloud', str(remoteCount))
+            async_increment_remote_count(HBNAME, -1)
             async_set_remote_count(get_request("/hb"))
             print("done hb cloud")
         else:
             async_update_remote_count('hb')
-            print('running hb cloud')
+            print('running hb local', str(remoteCount))
             local.hb()
             print("done hb local")
-    except:
-        print('Error running hb', run_in_cloud)
+    except Exception as e:
+        print('Error running hb:', e)
         error = True
     finally:
         return Response('', status=500 if error else 200)
 
 
 if __name__ == '__main__':
-    #threading.Thread(target=edge.simulate_arrival).start()
     threading.Thread(target=update_remote_count).start()
     app.run()

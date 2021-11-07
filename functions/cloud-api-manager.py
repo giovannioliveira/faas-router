@@ -18,7 +18,7 @@ gcnt = 0
 hcnt = 0
 hbcnt = 0
 
-available = {
+running_count = {
       FNAME: 0,
       GNAME: 0,
       HNAME: 0,
@@ -40,24 +40,23 @@ def monitor():
             HNAME: 0,
             HBNAME: 0
          }
-
          for r in running:
             if FNAME in r[1]:
-               aux[FNAME] = int(r[0]) - fcnt
+               aux[FNAME] = int(r[0])
             elif GNAME in r[1]:
-               aux[GNAME] = int(r[0]) - gcnt
+               aux[GNAME] = int(r[0])
             elif HBNAME in r[1]:
-               aux[HBNAME] = int(r[0]) - hbcnt
+               aux[HBNAME] = int(r[0])
             elif HNAME in r[1]:
-               aux[HNAME] = int(r[0]) - hcnt
-         global available
-         available = aux
+               aux[HNAME] = int(r[0])
+         global running_count
+         running_count = aux
          errcnt = 0
       except:
          print('error running kubectl list pods')
          errcnt += 1
          if errcnt == 3:
-            available = {
+            running_count = {
                FNAME: 0,
                GNAME: 0,
                HNAME: 0,
@@ -67,11 +66,18 @@ def monitor():
          time.sleep(.05)
 
 
+def send_wakeup_request(function_name):
+   try:
+      os.system('curl faas-router-'+function_name+'.default.127.0.0.1.nip.io?wakeup=true')
+   except:
+      print('Error in wakeup requesto to '+function_name)
+
+
 @app.route('/f')
 def f():
    if request.args.get('wakeup'):
       threading.Thread(
-         target=(lambda: os.system('curl faas-router-f.default.127.0.0.1.nip.io?wakeup=true'))).start()
+         target=send_wakeup_request, args=('f',)).start()
       return info()
 
    global fcnt
@@ -96,7 +102,7 @@ def g():
 
    if request.args.get('wakeup'):
       threading.Thread(
-         target=(lambda: os.system('curl faas-router-g.default.127.0.0.1.nip.io?wakeup=true'))).start()
+         target=send_wakeup_request, args=('g',)).start()
       return info()
 
 
@@ -122,7 +128,7 @@ def h():
 
    if request.args.get('wakeup'):
       threading.Thread(
-         target=(lambda: os.system('curl faas-router-h.default.127.0.0.1.nip.io?wakeup=true'))).start()
+         target=send_wakeup_request, args=('h',)).start()
       return info()
 
    global hcnt
@@ -147,7 +153,7 @@ def hb():
 
    if request.args.get('wakeup'):
       threading.Thread(
-         target=(lambda: os.system('curl faas-router-hb.default.127.0.0.1.nip.io?wakeup=true'))).start()
+         target=send_wakeup_request, args=('hb',)).start()
       return info()
 
    global hbcnt
@@ -169,8 +175,13 @@ def hb():
 
 @app.route('/info')
 def info():
-   global available
-   return str(available)
+   global running_count
+   return str({
+      FNAME: running_count[FNAME] - fcnt,
+      GNAME: running_count[GNAME] - gcnt,
+      HNAME: running_count[HNAME] - hcnt,
+      HBNAME: running_count[HBNAME] - hbcnt
+   })
 
 
 

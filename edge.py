@@ -26,10 +26,15 @@ def simulate_arrival():
         def caller(function_name):
             atomic_modify(function_name, 1)
             t0 = time.time_ns()
-            urllib.request.urlopen("http://localhost:5000/"+function_name)
+            try:
+                urllib.request.urlopen("http://localhost:5000/"+function_name)
+            except Exception as e:
+                print("random call to "+function_name+" failed")
+                print(e)
             tf = time.time_ns()
             execution_history[function_name].append(tf-t0)
             atomic_modify(function_name, -1)
+
         while True:
             threading.Thread(target=caller, args=(function_name,)).start()
             time.sleep(next_arrive[function_name]())
@@ -37,7 +42,6 @@ def simulate_arrival():
     threading.Thread(target=random_caller, args=('f',)).start()
     threading.Thread(target=random_caller, args=('g',)).start()
     threading.Thread(target=random_caller, args=('h',)).start()
-
     threading.Thread(target=random_caller, args=("hb",)).start()
 
     t = 0
@@ -61,3 +65,6 @@ def simulate_arrival():
         print('\n\n')
         t += 1
         time.sleep(1)
+
+if __name__ == '__main__':
+    simulate_arrival()
