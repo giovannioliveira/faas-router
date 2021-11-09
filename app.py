@@ -55,12 +55,14 @@ def reset_remote_count():
 
 
 def get_request(sufix):
-    return urllib.request.urlopen("http://192.168.56.105:8080"+sufix).read().decode('utf-8')
+    return urllib.request.urlopen("http://192.168.56.105:8080"+sufix, timeout=120).read().decode('utf-8')
 
-def async_update_remote_count(function_name):
-    threading.Thread(
-        target=(lambda: set_remote_count(get_request("/"+function_name+"?wakeup=true"), True))
-    ).start()
+
+def signal_remote_scale_up(function_name):
+    try:
+        set_remote_count(get_request("/"+function_name+"?wakeup=true"), True)
+    except:
+        print('async update failed for '+function_name)
 
 
 def update_remote_count():
@@ -75,11 +77,11 @@ def update_remote_count():
                 reset_remote_count()
             print('Error in connection with remote cloud', e)
         finally:
-            time.sleep(.2)
+            time.sleep(.5)
 
 
 def cloud_has_warm_instance(function_name):
-    return remoteCount[function_name] > 0
+    return True
 
 
 @app.route('/')
@@ -95,18 +97,27 @@ def f():
         if run_in_cloud:
             print('running f cloud', str(remoteCount))
             async_increment_remote_count(FNAME, -1)
-            async_set_remote_count(get_request("/f"))
+            res = None
+            try:
+                res = get_request("/f")
+            except:
+                pass
+                # local.f()
+                # error = False
+                # run_in_cloud = False
+            if res:
+                async_set_remote_count(res)
             print("done f cloud")
         else:
-            async_update_remote_count('f')
-            print('running f local', str(remoteCount))
+            threading.Thread(target=signal_remote_scale_up, args=('f',)).start()
+            print('running f local ', str(remoteCount))
             local.f()
             print('done f local')
     except Exception as e:
         print('Error running f:', e)
         error = True
     finally:
-        return Response('', status=500 if error else 200)
+        return Response('cloud' if run_in_cloud else 'local', status=500 if error else 200)
 
 
 @app.route('/g')
@@ -117,10 +128,19 @@ def g():
         if run_in_cloud:
             print('running g cloud', str(remoteCount))
             async_increment_remote_count(GNAME, -1)
-            async_set_remote_count(get_request("/g"))
+            res = None
+            try:
+                res = get_request("/g")
+            except:
+                pass
+                # local.g()
+                # error = False
+                # run_in_cloud = False
+            if res:
+                async_set_remote_count(res)
             print("done g cloud")
         else:
-            async_update_remote_count('g')
+            threading.Thread(target=signal_remote_scale_up, args=('g',)).start()
             print('running g local', str(remoteCount))
             local.g()
             print("done g local")
@@ -128,7 +148,7 @@ def g():
         print('Error running g', e)
         error = True
     finally:
-        return Response('', status=500 if error else 200)
+        return Response('cloud' if run_in_cloud else 'local', status=500 if error else 200)
 
 
 
@@ -140,10 +160,19 @@ def h():
         if run_in_cloud:
             print('running h cloud', str(remoteCount))
             async_increment_remote_count(HNAME, -1)
-            async_set_remote_count(get_request("/h"))
+            res = None
+            try:
+                res = get_request("/h")
+            except:
+                pass
+                # local.h()
+                # error = False
+                # run_in_cloud = False
+            if res:
+                async_set_remote_count(res)
             print("done h cloud")
         else:
-            async_update_remote_count('h')
+            threading.Thread(target=signal_remote_scale_up, args=('h',)).start()
             print('running h local', str(remoteCount))
             local.h()
             print("done h local")
@@ -151,7 +180,7 @@ def h():
         print('Error running h:', e)
         error = True
     finally:
-        return Response('', status=500 if error else 200)
+        return Response('cloud' if run_in_cloud else 'local', status=500 if error else 200)
 
 
 @app.route('/hb')
@@ -162,10 +191,19 @@ def hb():
         if run_in_cloud:
             print('running hb cloud', str(remoteCount))
             async_increment_remote_count(HBNAME, -1)
-            async_set_remote_count(get_request("/hb"))
+            res = None
+            try:
+                res = get_request("/hb")
+            except:
+                pass
+                # local.hb()
+                # error = False
+                # run_in_cloud = False
+            if res:
+                async_set_remote_count(res)
             print("done hb cloud")
         else:
-            async_update_remote_count('hb')
+            threading.Thread(target=signal_remote_scale_up, args=('hb',)).start()
             print('running hb local', str(remoteCount))
             local.hb()
             print("done hb local")
@@ -173,7 +211,7 @@ def hb():
         print('Error running hb:', e)
         error = True
     finally:
-        return Response('', status=500 if error else 200)
+        return Response('cloud' if run_in_cloud else 'local', status=500 if error else 200)
 
 
 if __name__ == '__main__':

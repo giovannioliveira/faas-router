@@ -10,7 +10,7 @@ def f():
    if request.args.get('wakeup'):
       return 'ready'
    t0 = time.time_ns()
-   x = 246912457
+   x = 24691245
    for i in range(x - 1, 1, -1):
        if (x % i) == 0:
            break

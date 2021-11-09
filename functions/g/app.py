@@ -10,7 +10,7 @@ def f():
    if request.args.get('wakeup'):
       return 'ready'
    t0 = time.time_ns()
-   time.sleep(100)
+   time.sleep(10)
    return str(time.time_ns() - t0)
 
 

@@ -3,6 +3,7 @@ import subprocess
 import time
 from flask import Flask, Response, request
 import threading
+import urllib.request
 
 FNAME = 'faas-router-f'
 GNAME = 'faas-router-g'
@@ -26,6 +27,12 @@ running_count = {
 }
 
 app = Flask(__name__)
+
+def get_request(function_name, wakeup = False):
+   return urllib.request.urlopen('http://faas-router-' +
+                                 function_name +
+                                 '.default.127.0.0.1.nip.io'
+                                 + ('?wakeup=True' if wakeup else ''), timeout=120).read().decode('utf-8')
 
 def monitor():
    errcnt = 0
@@ -68,7 +75,7 @@ def monitor():
 
 def send_wakeup_request(function_name):
    try:
-      os.system('curl faas-router-'+function_name+'.default.127.0.0.1.nip.io?wakeup=true')
+      get_request(function_name, wakeup=True)
    except:
       print('Error in wakeup requesto to '+function_name)
 
@@ -87,7 +94,7 @@ def f():
    error = False
 
    try:
-      os.system('curl faas-router-f.default.127.0.0.1.nip.io')
+      get_request('f')
    except:
       error = True
    finally:
@@ -113,7 +120,7 @@ def g():
    error = False
 
    try:
-      os.system('curl faas-router-g.default.127.0.0.1.nip.io')
+      get_request('g')
    except:
       error = True
    finally:
@@ -138,7 +145,7 @@ def h():
    error = False
 
    try:
-      os.system('curl faas-router-h.default.127.0.0.1.nip.io')
+      get_request('h')
    except:
       error = True
    finally:
@@ -163,7 +170,7 @@ def hb():
    error = False
 
    try:
-      os.system('curl faas-router-hb.default.127.0.0.1.nip.io')
+      get_request('hb')
    except:
       error = True
    finally:
