@@ -15,7 +15,7 @@ functions = {
     'hb': _hb.f
 }
 remoteCount = {}
-REMOTE_SERVER = "http://192.168.56.105:8081"
+REMOTE_SERVER = "http://200.144.244.220:8081"
 app = Flask(__name__)
 rcLock = threading.Lock()
 
