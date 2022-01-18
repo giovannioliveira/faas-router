@@ -1,9 +1,13 @@
+#!/usr/bin/python3
+
 import os
 import subprocess
 import time
 from flask import Flask, Response, request
 import threading
 import urllib.request
+
+log = open('cloud.log', 'w+')
 
 FNAME = 'f'
 GNAME = 'g'
@@ -38,7 +42,8 @@ def monitor():
 
         try:
             running = [i.split() for i in subprocess.Popen(
-                "kubectl get pods --all-namespaces -o jsonpath=\"{.items[*].spec.containers[*].image}\" |tr -s '[["
+                "kubectl get pods --all-namespaces --field-selector=status.phase==Running"
+                " -o jsonpath=\"{.items[*].spec.containers[*].image}\" |tr -s '[["
                 ":space:]]' '\n' |sort |uniq -c | grep faas-router-",
                 shell=True, stdout=-1).stdout.read().decode('utf-8').split('\n')][:-1]
             aux = {}
@@ -73,6 +78,7 @@ def send_wakeup_request(function_name):
 
 
 def run_function(function_name):
+    t0 = time.time_ns()
     if request.args.get('wakeup'):
         threading.Thread(
             target=send_wakeup_request, args=(function_name,)).start()
@@ -93,7 +99,13 @@ def run_function(function_name):
         context[function_name]['executing'] -= 1
         context[function_name]['lock'].release()
 
+        threading.Thread(target=write_log, args=(function_name, t0, time.time_ns(), error)).start()
+
         return Response(info(), status=500 if error else 200)
+
+def write_log(function_name, t0, tf, error):
+    log.write(str((function_name, t0, tf, error))[1:-1]+'\n')
+    log.flush()
 
 
 @app.route('/' + FNAME)

@@ -1,0 +1,10 @@
+[Unit]
+Description=API Manager
+
+[Service]
+ExecStart=/usr/local/bin/api.sh
+WorkingDirectory=/home/giovanni/
+User=giovanni
+
+[Install]
+WantedBy=multi-user.target
