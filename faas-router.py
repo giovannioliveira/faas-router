@@ -15,7 +15,7 @@ functions = {
     'hb': _hb.f
 }
 remoteCount = {}
-REMOTE_SERVER = "http://200.144.244.220:8081"
+REMOTE_SERVER = "http://200.144.244.220:50005"
 app = Flask(__name__)
 rcLock = threading.Lock()
 
@@ -136,4 +136,4 @@ def execute_function(function_name):
 if __name__ == '__main__':
     reset_remote_count()
     threading.Thread(target=update_remote_count).start()
-    app.run(port=8081)
+    app.run(debug=True, host='0.0.0.0', port=8081)
