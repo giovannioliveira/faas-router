@@ -109,7 +109,7 @@ def hb():
 
 def execute_function(function_name):
     remote_function_name = 'faas-router-' + function_name
-    run_in_cloud = cloud_has_warm_instance(remote_function_name)
+    run_in_cloud = cloud_has_warm_instance(function_name)
     t0 = time.time_ns()
     error = False
     try:
