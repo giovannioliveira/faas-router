@@ -19,6 +19,12 @@ REMOTE_SERVER = "http://200.144.244.220:8081"
 app = Flask(__name__)
 rcLock = threading.Lock()
 
+log = open('router.log', 'w+')
+
+def write_log(function_name, t0, tf, cloud,error):
+    log.write(str((function_name, t0, tf, cloud, error))[1:-1]+'\n')
+    log.flush()
+
 
 def set_remote_count(newCountStr, fromAsync=False):
     rcLock.acquire()
@@ -104,6 +110,7 @@ def hb():
 def execute_function(function_name):
     remote_function_name = 'faas-router-' + function_name
     run_in_cloud = cloud_has_warm_instance(remote_function_name)
+    t0 = time.time_ns()
     error = False
     try:
         if run_in_cloud:
@@ -122,6 +129,7 @@ def execute_function(function_name):
         print(f'Error running {function_name}:', e)
         error = True
     finally:
+        threading.Thread(target=write_log, args=(function_name, t0, time.time_ns(), run_in_cloud, error)).start()
         return Response('cloud' if run_in_cloud else 'local', status=500 if error else 200)
 
 
