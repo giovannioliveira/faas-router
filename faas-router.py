@@ -80,7 +80,7 @@ def update_remote_count():
 
 
 def cloud_has_warm_instance(function_name):
-    return False
+    return remoteCount[function_name] > 0
 
 
 @app.route('/')
