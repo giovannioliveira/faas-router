@@ -50,7 +50,7 @@ def async_increment_remote_count(function_name, inc):
     threading.Thread(target=atomic_increment_remote_count, args=(function_name, inc)).start()
 
 def reset_remote_count():
-    set_remote_count(str({('faas-router-'+fname):0 for fname in functions.keys()}))
+    set_remote_count(str({fname: 0 for fname in functions.keys()}))
 
 
 def get_request(sufix):
