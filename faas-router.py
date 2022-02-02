@@ -108,14 +108,13 @@ def hb():
 
 
 def execute_function(function_name):
-    remote_function_name = 'faas-router-' + function_name
     run_in_cloud = cloud_has_warm_instance(function_name)
     t0 = time.time_ns()
     error = False
     try:
         if run_in_cloud:
             print(f'running {function_name} in  cloud', str(remoteCount))
-            async_increment_remote_count(remote_function_name, -1)
+            async_increment_remote_count(function_name, -1)
             try:
                 async_set_remote_count(get_request(f'/{function_name}'))
             except:
