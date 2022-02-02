@@ -53,7 +53,7 @@ def monitor():
             for function_name in FUNCTION_NAMES:
                 found = False
                 for k in aux.keys():
-                    if (prefix + function_name + '-') in k:
+                    if (prefix + function_name + '@') in k:
                         context[function_name]['ready'] = aux[k]
                         found = True
                         break
