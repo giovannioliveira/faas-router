@@ -1,4 +1,5 @@
 import time
+import uuid
 from flask import Flask, Response
 import urllib.request
 import threading
@@ -21,8 +22,8 @@ rcLock = threading.Lock()
 
 log = open('router.log', 'w+')
 
-def write_log(function_name, t0, tf, cloud,error):
-    log.write(str((function_name, t0, tf, cloud, error))[1:-1]+'\n')
+def write_log(exec_id, function_name, t0, tf, cloud,error):
+    log.write(str((exec_id, function_name, t0, tf, cloud, error))[1:-1]+'\n')
     log.flush()
 
 
@@ -110,13 +111,14 @@ def hb():
 def execute_function(function_name):
     run_in_cloud = cloud_has_warm_instance(function_name)
     t0 = time.time_ns()
+    exec_id = str(uuid.uuid4())
     error = False
     try:
         if run_in_cloud:
             print(f'running {function_name} in  cloud', str(remoteCount))
             async_increment_remote_count(function_name, -1)
             try:
-                async_set_remote_count(get_request(f'/{function_name}'))
+                async_set_remote_count(get_request(f'/{function_name}?exec_id={exec_id}'))
             except:
                 error = True
         else:
@@ -128,8 +130,8 @@ def execute_function(function_name):
         print(f'Error running {function_name}:', e)
         error = True
     finally:
-        threading.Thread(target=write_log, args=(function_name, t0, time.time_ns(), run_in_cloud, error)).start()
-        return Response('cloud' if run_in_cloud else 'local', status=500 if error else 200)
+        threading.Thread(target=write_log, args=(exec_id, function_name, t0, time.time_ns(), run_in_cloud, error)).start()
+        return Response(f'{exec_id},{"cloud" if run_in_cloud else "fog"}', status=500 if error else 200)
 
 
 if __name__ == '__main__':

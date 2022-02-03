@@ -84,6 +84,8 @@ def run_function(function_name):
             target=send_wakeup_request, args=(function_name,)).start()
         return info()
 
+    exec_id = request.args.get('exec_id')
+
     global context
     context[function_name]['lock'].acquire()
     context[function_name]['executing'] += 1
@@ -99,12 +101,13 @@ def run_function(function_name):
         context[function_name]['executing'] -= 1
         context[function_name]['lock'].release()
 
-        threading.Thread(target=write_log, args=(function_name, t0, time.time_ns(), error)).start()
+        threading.Thread(target=write_log, args=(exec_id, function_name, t0, time.time_ns(), error)).start()
 
         return Response(info(), status=500 if error else 200)
 
-def write_log(function_name, t0, tf, error):
-    log.write(str((function_name, t0, tf, error))[1:-1]+'\n')
+
+def write_log(exec_id, function_name, t0, tf, error):
+    log.write(str((exec_id, function_name, t0, tf, error))[1:-1]+'\n')
     log.flush()
 
 
